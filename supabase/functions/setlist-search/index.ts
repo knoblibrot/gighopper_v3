@@ -3,7 +3,8 @@
 //
 // Secrets (supabase secrets set ...): SETLISTFM_API_KEY, ALLOWED_ORIGINS.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by the platform.
-// The gateway rejects requests without a valid user JWT (verify_jwt is on).
+// The gateway rejects requests without a valid JWT (verify_jwt is on); the
+// handler additionally requires that JWT to belong to a signed-in user.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { parseSetlist, uniqueBy, type ParsedEvent, type SetlistFmSearchResponse } from '../_shared/setlistfm.ts'
@@ -103,6 +104,12 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers })
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, headers)
 
+  // verify_jwt only checks the signature, and the public anon key is itself a
+  // valid JWT. Require a signed-in user, so nobody else spends our quota.
+  const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+  const { data: auth } = token ? await db.auth.getUser(token) : { data: { user: null } }
+  if (!auth.user) return json({ error: 'unauthorized' }, 401, headers)
+
   let artist: unknown
   let page: unknown
   try {
@@ -122,13 +129,20 @@ Deno.serve(async (req) => {
   url.searchParams.set('countryCode', 'DE')
   url.searchParams.set('p', String(page))
 
-  const response = await fetch(url, {
-    headers: {
-      Accept: 'application/json',
-      'Accept-Language': 'de',
-      'x-api-key': Deno.env.get('SETLISTFM_API_KEY')!,
-    },
-  })
+  let response: Response
+  try {
+    response = await fetch(url, {
+      headers: {
+        Accept: 'application/json',
+        'Accept-Language': 'de',
+        'x-api-key': Deno.env.get('SETLISTFM_API_KEY')!,
+      },
+    })
+  } catch (error) {
+    // Network failure: answer with CORS headers so the client sees an error, not a CORS block.
+    console.error('setlist.fm unreachable', error)
+    return json({ error: 'upstream_error' }, 502, headers)
+  }
 
   // setlist.fm answers 404 when nothing matches.
   if (response.status === 404) return json({ total: 0, page, perPage: 20, events: [] }, 200, headers)

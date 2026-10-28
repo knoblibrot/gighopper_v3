@@ -64,6 +64,14 @@ npm run dev
 npm test
 ```
 
+For a local backend instead of a hosted project (needs Docker), start the
+stack and put the printed API URL and anon key into `.env.local`. Login mails
+land in Mailpit at http://127.0.0.1:54324.
+
+```bash
+supabase start
+```
+
 ## Next up
 
 - Friends and "wer war noch da" on a show
