@@ -1,0 +1,99 @@
+{
+  "nav": {
+    "main": "Hauptnavigation",
+    "diary": "Tagebuch",
+    "forYou": "Für dich",
+    "stats": "Statistik",
+    "add": "Show eintragen"
+  },
+  "common": {
+    "loading": "Lädt …",
+    "retry": "Nochmal versuchen",
+    "error": "Da ist etwas schiefgelaufen.",
+    "close": "Schließen",
+    "back": "Zurück",
+    "showCount_one": "{{count}} Show",
+    "showCount_other": "{{count}} Shows"
+  },
+  "setup": {
+    "title": "Fast startklar",
+    "body": "Es fehlen noch die Supabase-Zugangsdaten. Trag VITE_SUPABASE_URL und VITE_SUPABASE_ANON_KEY in die .env.local ein und starte neu."
+  },
+  "auth": {
+    "title": "Dein Konzert-Tagebuch",
+    "intro": "Melde dich mit deiner E-Mail an. Wir schicken dir einen Link – kein Passwort nötig.",
+    "email": "E-Mail-Adresse",
+    "submit": "Login-Link schicken",
+    "sent": "Check deine Mails – der Link ist unterwegs an {{email}}.",
+    "signOut": "Abmelden"
+  },
+  "diary": {
+    "title": "Tagebuch",
+    "since_other": "{{count}} Shows seit {{year}}",
+    "since_one": "{{count}} Show seit {{year}}",
+    "inDays_one": "Morgen",
+    "inDays_other": "In {{count}} Tagen",
+    "today": "Heute",
+    "emptyTitle": "Noch leer hier",
+    "emptyBody": "Trag deine erste Show ein – oder gleich alle, bei denen du schon warst.",
+    "emptyCta": "Erste Show eintragen",
+    "rating": "Bewertung: {{rating}} von 5"
+  },
+  "add": {
+    "title": "Show eintragen",
+    "searchLabel": "Band oder Künstler:in",
+    "searchPlaceholder": "z. B. Kraftklub",
+    "search": "Suchen",
+    "past": "Vergangen",
+    "upcoming": "Kommend",
+    "found_one": "{{count}} Show in Deutschland gefunden. Tippe an, wo du dabei warst.",
+    "found_other": "{{count}} Shows in Deutschland gefunden. Tippe alle an, bei denen du dabei warst.",
+    "foundUpcoming": "Tippe an, wo du hingehst.",
+    "none": "Keine Shows gefunden. Stimmt die Schreibweise?",
+    "noneInTab": "In diesem Zeitraum gibt es keine Treffer.",
+    "inDiary": "Im Tagebuch",
+    "more": "Mehr laden",
+    "select": "Shows auswählen",
+    "save_one": "{{count}} Show eintragen",
+    "save_other": "{{count}} Shows eintragen",
+    "rateLimited": "setlist.fm braucht kurz eine Pause. Versuch es gleich nochmal.",
+    "hint": "Wir suchen auf setlist.fm – dort sind fast alle Shows der letzten Jahrzehnte erfasst."
+  },
+  "show": {
+    "yourShow": "Deine Show",
+    "timesArtist": "{{artist}}",
+    "inCity": "In {{city}}",
+    "nth": "{{count}}. Mal",
+    "rating": "Deine Bewertung",
+    "star": "{{count}} von 5 Sternen",
+    "notes": "Notiz",
+    "notesPlaceholder": "Mit wem warst du da? Was war besonders?",
+    "saved": "Gespeichert",
+    "setlist": "Setlist · via setlist.fm",
+    "setlistEmpty": "Noch keine Setlist erfasst.",
+    "openSetlist": "Auf setlist.fm ansehen",
+    "remove": "Aus dem Tagebuch entfernen",
+    "removeConfirm": "Wirklich entfernen?",
+    "upcoming": "Du gehst hin"
+  },
+  "stats": {
+    "title": "Statistik",
+    "period": "Zeitraum",
+    "all": "Gesamt",
+    "shows": "Shows",
+    "cities": "Städte",
+    "venues": "Venues",
+    "states": "{{count}} von 16 Bundesländern",
+    "mapLabel": "Deutschlandkarte als Kacheln. Besucht: {{states}}",
+    "mapLabelNone": "Deutschlandkarte als Kacheln. Noch kein Bundesland besucht.",
+    "topArtists": "Am häufigsten gesehen",
+    "emptyBody": "Sobald du Shows einträgst, füllt sich hier deine Karte."
+  },
+  "forYou": {
+    "title": "Für dich",
+    "next": "Deine nächsten Shows",
+    "noneUpcoming": "Keine kommenden Shows eingetragen. Unter „Kommend“ kannst du Shows eintragen, für die du Tickets hast.",
+    "alertsTitle": "Tour-Alarm kommt bald",
+    "alertsBody": "Hier siehst du bald neue Tourdaten von Bands aus deinem Tagebuch – mit Ticket-Link, sobald der Vorverkauf startet."
+  }
+}

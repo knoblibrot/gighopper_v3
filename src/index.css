@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens for direction A ("Abriss"): paper, ink, one signal colour.
+ * Components only use these names, so a dark theme later means redefining
+ * the variables, not touching components.
+ */
+@theme {
+  --color-paper: #f3f1ec;
+  --color-card: #ffffff;
+  --color-ink: #16150f;
+  --color-ink-soft: #c9c5bb;
+  --color-muted: #5f5c55;
+  --color-line: #dad6cc;
+  --color-line-soft: #ece8df;
+  --color-well: #e7e3da;
+  --color-signal: #ff5b2e;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Archivo', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Condensed uppercase display type used for headings and band names. */
+@utility display {
+  font-family: var(--font-display);
+  font-stretch: 68%;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 0.95;
+}
+
+/* Small monospace caps used for labels, dates and section titles. */
+@utility label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    cursor: pointer;
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Gighopper",
+  "short_name": "Gighopper",
+  "description": "Dein Konzert-Tagebuch",
+  "lang": "de",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3F1EC",
+  "theme_color": "#F3F1EC",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
