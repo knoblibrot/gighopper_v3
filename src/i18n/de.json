@@ -25,6 +25,7 @@
     "email": "E-Mail-Adresse",
     "submit": "Login-Link schicken",
     "sent": "Check deine Mails – der Link ist unterwegs an {{email}}.",
+    "rateLimited": "Gerade wurden zu viele Login-Links verschickt. Versuch es in ein paar Minuten nochmal – oder nimm den Link aus der letzten Mail.",
     "signOut": "Abmelden"
   },
   "diary": {

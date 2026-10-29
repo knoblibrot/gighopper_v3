@@ -6,7 +6,7 @@ import { db } from '../lib/supabase'
 export function LoginPage() {
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'rateLimited' | 'error'>('idle')
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -15,7 +15,8 @@ export function LoginPage() {
       email: email.trim(),
       options: { emailRedirectTo: window.location.origin },
     })
-    setStatus(error ? 'error' : 'sent')
+    // Supabase limits login mails per hour and per address; say so instead of a generic error.
+    setStatus(!error ? 'sent' : error.status === 429 ? 'rateLimited' : 'error')
   }
 
   return (
@@ -47,6 +48,11 @@ export function LoginPage() {
           <PrimaryButton type="submit" disabled={status === 'sending'}>
             {t('auth.submit')}
           </PrimaryButton>
+          {status === 'rateLimited' && (
+            <p role="alert" className="rounded-[10px] bg-card p-4 text-sm leading-relaxed">
+              {t('auth.rateLimited')}
+            </p>
+          )}
           {status === 'error' && <ErrorState />}
         </form>
       )}
