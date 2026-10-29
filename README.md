@@ -50,6 +50,20 @@ supabase functions deploy setlist-search
 4. In Supabase → Authentication → URL Configuration, add your app URL
    (e.g. `http://localhost:5173`) to the redirect URLs for the login link.
 
+## Hosting
+
+The app is a static site on Netlify (`netlify.toml`), served at
+https://gighopper.de. The domain and its mailbox stay at IONOS; only the web
+records point to Netlify. Each push to the production branch deploys.
+
+- Netlify → Environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+- Supabase → Authentication → URL Configuration: site URL
+  `https://gighopper.de`, redirect URLs `https://gighopper.de` and
+  `http://localhost:5173`.
+- Edge function secret: `ALLOWED_ORIGINS=https://gighopper.de,http://localhost:5173`.
+- Login mails go out through the IONOS mailbox (Supabase → Authentication →
+  Emails → SMTP Settings).
+
 ## Development
 
 ```bash
