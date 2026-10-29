@@ -6,6 +6,7 @@ import { ErrorState, IconLink, PrimaryButton, Skeleton } from '../components/ui'
 import { RateLimitedError, useDiary, useLogShows, useShowSearch } from '../data/queries'
 import { locale } from '../i18n'
 import { isPast, numericDate } from '../lib/dates'
+import { isOtherArtist } from '../lib/search'
 import type { FoundEvent } from '../lib/types'
 
 type Tab = 'past' | 'upcoming'
@@ -116,6 +117,7 @@ export function AddShowPage() {
                   <ResultRow
                     key={event.id}
                     event={event}
+                    showArtist={isOtherArtist(artist, event.artistName)}
                     done={inDiary.has(event.id)}
                     on={selected.has(event.id)}
                     onToggle={() => toggle(event.id)}
@@ -148,12 +150,25 @@ export function AddShowPage() {
   )
 }
 
-function ResultRow({ event, done, on, onToggle }: { event: FoundEvent; done: boolean; on: boolean; onToggle: () => void }) {
+function ResultRow({
+  event,
+  showArtist,
+  done,
+  on,
+  onToggle,
+}: {
+  event: FoundEvent
+  showArtist: boolean
+  done: boolean
+  on: boolean
+  onToggle: () => void
+}) {
   const { t } = useTranslation()
   const body = (
     <>
       <span className="w-[92px] flex-none font-mono text-[13px] font-bold">{numericDate(event.date, locale())}</span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+        {showArtist && <span className="label self-start rounded bg-signal px-1.5 py-0.5 text-[10px] text-ink">{event.artistName}</span>}
         <span className="text-[15px] font-semibold">{event.venueName}</span>
         <span className="text-[13px] text-muted">{event.cityName}</span>
       </span>
