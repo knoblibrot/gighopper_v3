@@ -28,6 +28,13 @@ export type SetlistFmSearchResponse = {
   setlist?: SetlistFmSetlist[]
 }
 
+export type SetlistFmArtistSearchResponse = {
+  total: number
+  artist?: Array<{ mbid?: string; name?: string; disambiguation?: string }>
+}
+
+export type ParsedArtist = { mbid: string; name: string; disambiguation: string | null }
+
 export type ParsedEvent = {
   setlistfmId: string
   date: string // yyyy-MM-dd
@@ -121,6 +128,20 @@ export function parseSetlist(raw: SetlistFmSetlist): ParsedEvent | null {
       lng: city.coords?.long ?? null,
     },
   }
+}
+
+// Artists for the picker, in setlist.fm's relevance order, except that exact
+// name matches (ignoring case and accents) come first: "Die Ärzte" before the
+// tribute band "Die Toten Ärzte".
+export function parseArtists(body: SetlistFmArtistSearchResponse, query: string): ParsedArtist[] {
+  const artists = uniqueBy(
+    (body.artist ?? [])
+      .filter((a) => a.mbid && a.name?.trim())
+      .map((a) => ({ mbid: a.mbid!, name: a.name!.trim(), disambiguation: a.disambiguation?.trim() || null })),
+    (a) => a.mbid,
+  )
+  const exact = (a: ParsedArtist) => a.name.localeCompare(query.trim(), 'de', { sensitivity: 'base' }) === 0
+  return [...artists.filter(exact), ...artists.filter((a) => !exact(a))]
 }
 
 export function uniqueBy<T>(items: T[], key: (item: T) => string): T[] {

@@ -3,23 +3,28 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Icon } from '../components/Icon'
 import { ErrorState, IconLink, PrimaryButton, Skeleton } from '../components/ui'
-import { RateLimitedError, useDiary, useLogShows, useShowSearch } from '../data/queries'
+import { RateLimitedError, useArtistSearch, useDiary, useLogShows, useShowSearch } from '../data/queries'
 import { locale } from '../i18n'
 import { isPast, numericDate } from '../lib/dates'
-import { isOtherArtist } from '../lib/search'
-import type { FoundEvent } from '../lib/types'
+import type { FoundArtist, FoundEvent } from '../lib/types'
 
 type Tab = 'past' | 'upcoming'
 
+// Adding shows takes two steps: search a name and pick the artist, then tick
+// that artist's shows. Shows are fetched by MusicBrainz id, so similarly named
+// artists ("Die Toten Ärzte" for "Die Ärzte") can't slip in.
 export function AddShowPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [input, setInput] = useState('')
-  const [artist, setArtist] = useState('')
+  const [query, setQuery] = useState('')
+  const [artist, setArtist] = useState<FoundArtist | null>(null)
   const [tab, setTab] = useState<Tab>('past')
+  // Kept across searches, so shows of several artists can be saved at once.
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
-  const search = useShowSearch(artist)
+  const artists = useArtistSearch(query)
+  const search = useShowSearch(artist?.mbid)
   const diary = useDiary()
   const logShows = useLogShows()
 
@@ -31,8 +36,8 @@ export function AddShowPage() {
 
   function submit(event: FormEvent) {
     event.preventDefault()
-    setSelected(new Set())
-    setArtist(input.trim())
+    setArtist(null)
+    setQuery(input.trim())
   }
 
   function toggle(id: string) {
@@ -77,63 +82,106 @@ export function AddShowPage() {
           </button>
         </form>
 
-        <div role="group" className="grid grid-cols-2 gap-1 rounded-[10px] bg-well p-1">
-          {(['past', 'upcoming'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={tab === value}
-              onClick={() => setTab(value)}
-              className={`min-h-[38px] rounded-[7px] text-sm ${tab === value ? 'bg-card font-semibold text-ink' : 'font-medium text-muted'}`}
-            >
-              {t(`add.${value}`)}
-            </button>
-          ))}
-        </div>
+        {!query && <p className="text-sm leading-relaxed text-muted">{t('add.hint')}</p>}
 
-        {!artist && <p className="text-sm leading-relaxed text-muted">{t('add.hint')}</p>}
-        {search.isPending && artist && <Skeleton count={4} />}
-        {search.isError &&
-          (search.error instanceof RateLimitedError ? (
-            <p role="alert" className="text-sm">{t('add.rateLimited')}</p>
-          ) : (
-            <ErrorState onRetry={() => search.refetch()} />
-          ))}
-
-        {search.isSuccess && (
+        {query && !artist && (
           <>
-            <p className="text-sm leading-relaxed text-muted">
-              {all.length === 0
-                ? t('add.none')
-                : shown.length === 0
-                  ? t('add.noneInTab')
-                  : tab === 'past'
-                    ? t('add.found', { count: shown.length })
-                    : t('add.foundUpcoming')}
-            </p>
-            {shown.length > 0 && (
-              <ul className="flex flex-col rounded-[10px] bg-card">
-                {shown.map((event) => (
-                  <ResultRow
-                    key={event.id}
-                    event={event}
-                    showArtist={isOtherArtist(artist, event.artistName)}
-                    done={inDiary.has(event.id)}
-                    on={selected.has(event.id)}
-                    onToggle={() => toggle(event.id)}
-                  />
-                ))}
-              </ul>
+            {artists.isPending && <Skeleton count={3} />}
+            {artists.isError && <SearchError error={artists.error} onRetry={() => artists.refetch()} />}
+            {artists.isSuccess && (
+              <>
+                <p className="text-sm leading-relaxed text-muted">
+                  {artists.data.length === 0 ? t('add.noArtists') : t('add.pickArtist')}
+                </p>
+                {artists.data.length > 0 && (
+                  <ul className="flex flex-col rounded-[10px] bg-card">
+                    {artists.data.map((a) => (
+                      <li key={a.mbid} className="border-b border-line-soft last:border-0">
+                        <button
+                          type="button"
+                          onClick={() => setArtist(a)}
+                          className="flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left"
+                        >
+                          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                            <span className="text-[15px] font-semibold">{a.name}</span>
+                            {a.disambiguation && <span className="text-[13px] text-muted">{a.disambiguation}</span>}
+                          </span>
+                          <Icon name="chevron" size={18} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
-            {search.hasNextPage && (
+          </>
+        )}
+
+        {artist && (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="display min-w-0 text-[26px] break-words">{artist.name}</h2>
               <button
                 type="button"
-                onClick={() => search.fetchNextPage()}
-                disabled={search.isFetchingNextPage}
-                className="min-h-11 self-center text-sm font-semibold underline underline-offset-4"
+                onClick={() => setArtist(null)}
+                className="min-h-11 flex-none text-sm font-semibold underline underline-offset-4"
               >
-                {search.isFetchingNextPage ? t('common.loading') : t('add.more')}
+                {t('add.otherArtist')}
               </button>
+            </div>
+
+            <div role="group" className="grid grid-cols-2 gap-1 rounded-[10px] bg-well p-1">
+              {(['past', 'upcoming'] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={tab === value}
+                  onClick={() => setTab(value)}
+                  className={`min-h-[38px] rounded-[7px] text-sm ${tab === value ? 'bg-card font-semibold text-ink' : 'font-medium text-muted'}`}
+                >
+                  {t(`add.${value}`)}
+                </button>
+              ))}
+            </div>
+
+            {search.isPending && <Skeleton count={4} />}
+            {search.isError && <SearchError error={search.error} onRetry={() => search.refetch()} />}
+
+            {search.isSuccess && (
+              <>
+                <p className="text-sm leading-relaxed text-muted">
+                  {all.length === 0
+                    ? t('add.none')
+                    : shown.length === 0
+                      ? t('add.noneInTab')
+                      : tab === 'past'
+                        ? t('add.found', { count: shown.length })
+                        : t('add.foundUpcoming')}
+                </p>
+                {shown.length > 0 && (
+                  <ul className="flex flex-col rounded-[10px] bg-card">
+                    {shown.map((event) => (
+                      <ResultRow
+                        key={event.id}
+                        event={event}
+                        done={inDiary.has(event.id)}
+                        on={selected.has(event.id)}
+                        onToggle={() => toggle(event.id)}
+                      />
+                    ))}
+                  </ul>
+                )}
+                {search.hasNextPage && (
+                  <button
+                    type="button"
+                    onClick={() => search.fetchNextPage()}
+                    disabled={search.isFetchingNextPage}
+                    className="min-h-11 self-center text-sm font-semibold underline underline-offset-4"
+                  >
+                    {search.isFetchingNextPage ? t('common.loading') : t('add.more')}
+                  </button>
+                )}
+              </>
             )}
           </>
         )}
@@ -150,25 +198,24 @@ export function AddShowPage() {
   )
 }
 
-function ResultRow({
-  event,
-  showArtist,
-  done,
-  on,
-  onToggle,
-}: {
-  event: FoundEvent
-  showArtist: boolean
-  done: boolean
-  on: boolean
-  onToggle: () => void
-}) {
+function SearchError({ error, onRetry }: { error: Error; onRetry: () => void }) {
+  const { t } = useTranslation()
+  if (error instanceof RateLimitedError) {
+    return (
+      <p role="alert" className="text-sm">
+        {t('add.rateLimited')}
+      </p>
+    )
+  }
+  return <ErrorState onRetry={onRetry} />
+}
+
+function ResultRow({ event, done, on, onToggle }: { event: FoundEvent; done: boolean; on: boolean; onToggle: () => void }) {
   const { t } = useTranslation()
   const body = (
     <>
       <span className="w-[92px] flex-none font-mono text-[13px] font-bold">{numericDate(event.date, locale())}</span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
-        {showArtist && <span className="label self-start rounded bg-signal px-1.5 py-0.5 text-[10px] text-ink">{event.artistName}</span>}
         <span className="text-[15px] font-semibold">{event.venueName}</span>
         <span className="text-[13px] text-muted">{event.cityName}</span>
       </span>

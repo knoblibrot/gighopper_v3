@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { db } from '../lib/supabase'
-import type { Attendance, SearchPage, ShowFacts, Stats } from '../lib/types'
+import type { Attendance, FoundArtist, SearchPage, ShowFacts, Stats } from '../lib/types'
 
 const ATTENDANCE_SELECT = `
   id, rating, notes,
@@ -16,7 +16,8 @@ export const keys = {
   attendance: (id: string) => ['attendance', id] as const,
   facts: (eventId: string) => ['facts', eventId] as const,
   stats: (year: number | null) => ['stats', year] as const,
-  search: (artist: string) => ['search', artist] as const,
+  artists: (query: string) => ['artists', query] as const,
+  shows: (mbid: string) => ['shows', mbid] as const,
 }
 
 export function useDiary() {
@@ -66,20 +67,31 @@ export function useStats(year: number | null) {
 
 export class RateLimitedError extends Error {}
 
-export function useShowSearch(artist: string) {
+async function setlistSearch<T>(body: Record<string, unknown>): Promise<T> {
+  const { data, error, response } = await db().functions.invoke<T>('setlist-search', { body })
+  if (response?.status === 429) throw new RateLimitedError()
+  if (error) throw error
+  return data!
+}
+
+// Step one of adding shows: which artist is meant.
+export function useArtistSearch(query: string) {
+  return useQuery({
+    queryKey: keys.artists(query),
+    enabled: query.length >= 2,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => (await setlistSearch<{ artists: FoundArtist[] }>({ artist: query })).artists,
+  })
+}
+
+// Step two: that artist's shows in Germany, by MusicBrainz id.
+export function useShowSearch(mbid: string | undefined) {
   return useInfiniteQuery({
-    queryKey: keys.search(artist),
-    enabled: artist.length >= 2,
+    queryKey: keys.shows(mbid ?? ''),
+    enabled: Boolean(mbid),
     initialPageParam: 1,
     staleTime: 10 * 60 * 1000,
-    queryFn: async ({ pageParam }) => {
-      const { data, error, response } = await db().functions.invoke<SearchPage>('setlist-search', {
-        body: { artist, page: pageParam },
-      })
-      if (response?.status === 429) throw new RateLimitedError()
-      if (error) throw error
-      return data!
-    },
+    queryFn: ({ pageParam }) => setlistSearch<SearchPage>({ mbid, page: pageParam }),
     getNextPageParam: (last) => (last.page * last.perPage < last.total ? last.page + 1 : undefined),
   })
 }

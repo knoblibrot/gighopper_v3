@@ -19,7 +19,14 @@ export type Attendance = {
   event: Event
 }
 
-// One result of the setlist-search edge function.
+// An artist suggestion from the setlist-search edge function.
+export type FoundArtist = {
+  mbid: string
+  name: string
+  disambiguation: string | null
+}
+
+// One show from the setlist-search edge function.
 export type FoundEvent = {
   id: string
   date: string

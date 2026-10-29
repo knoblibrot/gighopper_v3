@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { germanCityName, germanStateCode, parseEventDate, parseSetlist, uniqueBy, type SetlistFmSetlist } from './setlistfm.ts'
+import {
+  germanCityName,
+  germanStateCode,
+  parseArtists,
+  parseEventDate,
+  parseSetlist,
+  uniqueBy,
+  type SetlistFmSetlist,
+} from './setlistfm.ts'
 
 const raw: SetlistFmSetlist = {
   id: '63a1b2c3',
@@ -70,5 +78,28 @@ describe('uniqueBy', () => {
       { k: 'a', v: 2 },
       { k: 'b', v: 3 },
     ])
+  })
+})
+
+describe('parseArtists', () => {
+  it('puts exact matches first and keeps the rest in relevance order', () => {
+    const body = {
+      total: 4,
+      artist: [
+        { mbid: 'toten', name: 'Die Toten Ärzte', disambiguation: 'Die Ärzte & Die Toten Hosen Tribute Band' },
+        { mbid: 'aerzte', name: 'Die Ärzte', disambiguation: '' },
+        { mbid: 'feat', name: 'Die Ärzte feat. Axel Knabben' },
+        { name: 'No id' },
+      ],
+    }
+    expect(parseArtists(body, 'die arzte')).toEqual([
+      { mbid: 'aerzte', name: 'Die Ärzte', disambiguation: null },
+      { mbid: 'toten', name: 'Die Toten Ärzte', disambiguation: 'Die Ärzte & Die Toten Hosen Tribute Band' },
+      { mbid: 'feat', name: 'Die Ärzte feat. Axel Knabben', disambiguation: null },
+    ])
+  })
+
+  it('handles an empty answer', () => {
+    expect(parseArtists({ total: 0 }, 'x')).toEqual([])
   })
 })
